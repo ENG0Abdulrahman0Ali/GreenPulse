@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenPulse | Climate Intelligence Platform</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/feathericons/feather/master/icons/activity.svg">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for in-browser JSX Execution -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #0F172A; }
+        
+        /* Hide all horizontal scrollbars completely */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        const REGIONS = {
+            "New Valley": {
+                name: "New Valley (الوادي الجديد)",
+                coords: "25.45° N, 30.54° E",
+                temp: 39.8,
+                rainfall: 18.5,
+                moisture: 9.2,
+                ndvi: 0.11,
+                risk: 75,
+                status: "Critical Risk",
+                statusColor: "red",
+                species: "Acacia Tortilis (الطلح الصحراوي)",
+                suitability: 84,
+                speciesReason: "High thermal ceiling (>45°C), low water footprint, and deep taproot system to bind loose sands.",
+                priorityRank: 2,
+                priorityScore: 54,
+                recommendedFocus: "Construct rainwater-harvesting cisterns and desert check-dams"
+            },
+            "North Sinai": {
+                name: "North Sinai (شمال سيناء)",
+                coords: "30.60° N, 33.61° E",
+                temp: 33.4,
+                rainfall: 115.0,
+                moisture: 21.0,
+                ndvi: 0.22,
+                risk: 42,
+                status: "Moderate Risk",
+                statusColor: "amber",
+                species: "Jojoba (الهوهوبا)",
+                suitability: 78,
+                speciesReason: "Exceptional soil salinity tolerance and efficient windbreak performance against coastal erosion.",
+                priorityRank: 3,
+                priorityScore: 45,
+                recommendedFocus: "Construct rainwater-harvesting cisterns and desert check-dams"
+            },
+            "Matrouh": {
+                name: "Matrouh / Western Desert (مطروح)",
+                coords: "31.35° N, 27.23° E",
+                temp: 31.2,
+                rainfall: 140.0,
+                moisture: 24.5,
+                ndvi: 0.26,
+                risk: 27,
+                status: "Resilient / Low Risk",
+                statusColor: "green",
+                species: "Olive & Acacia Mix",
+                suitability: 88,
+                speciesReason: "High adaptation to seasonal precipitation patterns with resilient Mediterranean foliage.",
+                priorityRank: 4,
+                priorityScore: 43,
+                recommendedFocus: "Establish native-species nurseries and phased afforestation blocks"
+            },
+            "East Oweinat": {
+                name: "East Oweinat (شرق العوينات)",
+                coords: "22.60° N, 28.70° E",
+                temp: 42.1,
+                rainfall: 6.0,
+                moisture: 8.0,
+                ndvi: 0.08,
+                risk: 82,
+                status: "Critical Risk",
+                statusColor: "red",
+                species: "Conocarpus & Native Shrubs",
+                suitability: 71,
+                speciesReason: "Tolerates extreme evapotranspiration and shallow soil horizons with targeted drip networks.",
+                priorityRank: 1,
+                priorityScore: 56,
+                recommendedFocus: "Construct rainwater-harvesting cisterns and desert check-dams"
+            }
+        };
+
+        function App() {
+            const [activeTab, setActiveTab] = useState("overview");
+            const [selectedRegionKey, setSelectedRegionKey] = useState("New Valley");
+            
+            // Simulation Controls
+            const [treesCount, setTreesCount] = useState(65); // in thousands
+            const [irrigation, setIrrigation] = useState("Solar Drip");
+            const [horizon, setHorizon] = useState(3);
+
+            const region = REGIONS[selectedRegionKey];
+
+            // Calculations for Simulation
+            const cooling = useMemo(() => ((treesCount / 300) * 1.8 * (horizon / 3)).toFixed(2), [treesCount, horizon]);
+            const ndviGain = useMemo(() => ((treesCount / 300) * 0.28).toFixed(2), [treesCount]);
+            const carbonOffset = useMemo(() => ((treesCount * 1000 * 22) / 1000).toLocaleString(), [treesCount]);
+            const moistureRecovery = useMemo(() => (parseFloat(ndviGain) * 35).toFixed(1), [ndviGain]);
+
+            return (
+                <div className="min-h-screen flex flex-col justify-between">
+                    {/* TOP NAVBAR WITH LARGE LOGOS & NO SCROLLBAR */}
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+                            {/* Project & Team Branding */}
+                            <div className="flex items-center gap-5 sm:gap-7">
+                                <img 
+                                    src="assets/branding/greenpulse_logo.png" 
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "assets/branding/GreenPluse.png"; }}
+                                    alt="GreenPulse Logo" 
+                                    className="h-16 sm:h-20 max-w-[260px] object-contain cursor-pointer transition-transform hover:scale-105"
+                                />
+                                <div className="h-10 w-[1.5px] bg-slate-200 hidden sm:block"></div>
+                                <img 
+                                    src="assets/branding/amora_logo.png" 
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "assets/branding/AMORA .png"; }}
+                                    alt="AMORA Tech" 
+                                    className="h-10 sm:h-12 max-w-[150px] object-contain opacity-95 transition-opacity hover:opacity-100"
+                                />
+                            </div>
+
+                            {/* Hackathon Badge & Logo */}
+                            <div className="flex flex-col items-center justify-center gap-1.5">
+                                <img 
+                                    src="assets/branding/seta_hack_logo.jpg" 
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "assets/branding/SETA HACK.jpg"; }}
+                                    alt="SETA HACK" 
+                                    className="h-14 sm:h-16 rounded-xl object-contain shadow-sm border border-slate-200"
+                                />
+                                <span className="text-[11px] font-extrabold text-sky-800 bg-sky-50 px-3 py-0.5 rounded-full border border-sky-200 flex items-center gap-1.5 shadow-2xs">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+                                    SETA HACK 2026
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* HORIZONTAL NAV TABS (NO SCROLLBAR) */}
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 border-t border-slate-100 overflow-x-auto no-scrollbar text-sm font-medium">
+                            {[
+                                { id: "overview", label: "Overview & Risk Analysis" },
+                                { id: "afforestation", label: "Afforestation Strategy" },
+                                { id: "simulation", label: "Impact & Scenario Modeling" },
+                                { id: "priority", label: "National Priority Matrix" },
+                                { id: "methodology", label: "Methodology & Provenance" },
+                                { id: "team", label: "Meet the Team" },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`py-3 px-4 border-b-2 whitespace-nowrap transition-all ${
+                                        activeTab === tab.id
+                                            ? "border-green-600 text-green-800 font-bold bg-green-50/70"
+                                            : "border-transparent text-slate-600 hover:text-green-700 hover:border-slate-300"
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </header>
+
+                    {/* MAIN CONTENT AREA */}
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
+                        
+                        {/* REGION SELECTION TOOLBAR */}
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <span className="text-sm font-bold text-slate-700 whitespace-nowrap">Target Territory:</span>
+                                <select
+                                    value={selectedRegionKey}
+                                    onChange={(e) => setSelectedRegionKey(e.target.value)}
+                                    className="bg-slate-50 border border-slate-300 text-slate-900 text-sm font-semibold rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 shadow-2xs"
+                                >
+                                    {Object.keys(REGIONS).map((key) => (
+                                        <option key={key} value={key}>{REGIONS[key].name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-slate-500 font-medium w-full md:w-auto justify-end">
+                                <span>Coordinates: <b className="text-slate-700">{region.coords}</b></span>
+                                <span className="hidden sm:inline">•</span>
+                                <span>Benchmark Data: <b className="text-slate-700">ERA5 / Sentinel-2 Aggregates</b></span>
+                            </div>
+                        </div>
+
+                        {/* 1. OVERVIEW & RISK */}
+                        {activeTab === "overview" && (
+                            <div className="space-y-6">
+                                <div className="bg-gradient-to-r from-white via-green-50/40 to-emerald-50/60 border border-green-200/70 rounded-2xl p-6 sm:p-8 text-center shadow-sm">
+                                    <span className="text-xs font-extrabold uppercase tracking-widest text-green-700 bg-green-100/80 px-3 py-1 rounded-full border border-green-200">
+                                        Smarter Nature • Stronger Future
+                                    </span>
+                                    <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mt-3 mb-2">
+                                        Climate Intelligence for <span className="text-green-700">Smarter Land Restoration</span>
+                                    </h1>
+                                    <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
+                                        GreenPulse transforms multi-spectral satellite observations and climatic stress indicators into actionable decision pipelines for resilient land recovery under <b>The Great Green Wall</b>.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-all">
+                                        <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Avg Summer Temp</div>
+                                        <div className="text-3xl font-extrabold text-slate-900 mt-2">{region.temp}°C</div>
+                                        <div className="mt-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded w-max">
+                                            {region.temp > 35 ? "Thermal Stress Peak" : "Moderate Baseline"}
+                                        </div>
+                                    </div>
+                                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-all">
+                                        <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Annual Precipitation</div>
+                                        <div className="text-3xl font-extrabold text-slate-900 mt-2">{region.rainfall} mm</div>
+                                        <div className="mt-2 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded w-max">
+                                            {region.rainfall < 50 ? "Severe Moisture Deficit" : "Arid Baseline"}
+                                        </div>
+                                    </div>
+                                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-all">
+                                        <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Soil Moisture Content</div>
+                                        <div className="text-3xl font-extrabold text-slate-900 mt-2">{region.moisture}%</div>
+                                        <div className="mt-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded w-max">
+                                            {region.moisture < 15 ? "Degraded Topsoil" : "Hydrated Baseline"}
+                                        </div>
+                                    </div>
+                                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-all">
+                                        <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Vegetation Index (NDVI)</div>
+                                        <div className="text-3xl font-extrabold text-slate-900 mt-2">{region.ndvi}</div>
+                                        <div className="mt-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded w-max">
+                                            {region.ndvi < 0.20 ? "Sparse / Barren Cover" : "Stabilized"}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                                        <h3 className="text-base font-bold text-slate-900 mb-4">Land Degradation Risk Assessment</h3>
+                                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-medium text-slate-600">Model Classification:</span>
+                                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                                                    region.risk > 60 ? 'bg-red-100 text-red-700 border border-red-200' :
+                                                    region.risk > 35 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                                                    'bg-green-100 text-green-700 border border-green-200'
+                                                }`}>
+                                                    {region.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                                <span>Vulnerability Score</span>
+                                                <span className="font-bold text-slate-800">{region.risk} / 100</span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full ${region.risk > 60 ? 'bg-red-600' : region.risk > 35 ? 'bg-amber-500' : 'bg-green-600'}`}
+                                                    style={{ width: `${region.risk}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2">Key Risk Drivers</div>
+                                        <div className="border border-slate-200 rounded-lg overflow-hidden text-xs">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                                                    <tr>
+                                                        <th className="p-2.5 font-bold">Stressor</th>
+                                                        <th className="p-2.5 font-bold">Observed</th>
+                                                        <th className="p-2.5 font-bold">Impact Weight</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    <tr><td className="p-2.5 font-medium">Thermal Evaporation Pressure</td><td className="p-2.5">{region.temp}°C</td><td className="p-2.5 font-bold text-red-600">High</td></tr>
+                                                    <tr><td className="p-2.5 font-medium">Precipitation Deficit</td><td className="p-2.5">{region.rainfall} mm</td><td className="p-2.5 font-bold text-red-600">Very High</td></tr>
+                                                    <tr><td className="p-2.5 font-medium">Soil Moisture Depletion</td><td className="p-2.5">{region.moisture}%</td><td className="p-2.5 font-bold text-amber-600">High</td></tr>
+                                                    <tr><td className="p-2.5 font-medium">Vegetation Loss (NDVI)</td><td className="p-2.5">{region.ndvi}</td><td className="p-2.5 font-bold text-red-600">Critical</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col justify-between bg-gradient-to-br from-green-900 to-green-950 text-white rounded-xl p-6 shadow-md">
+                                        <div>
+                                            <div className="text-xs font-extrabold uppercase tracking-widest text-green-300 mb-2">Actionable Decision Pathway</div>
+                                            <h4 className="text-xl font-bold mb-3">Targeted Species Intervention</h4>
+                                            <div className="bg-white/10 border border-white/15 rounded-xl p-4 backdrop-blur-sm mb-4">
+                                                <div className="text-xs text-green-300 font-semibold uppercase">Recommended Native Species</div>
+                                                <div className="text-lg font-extrabold text-white mt-0.5">{region.species}</div>
+                                                <p className="text-xs text-green-100 mt-2 leading-relaxed">{region.speciesReason}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-green-200">
+                                            <b>Priority Focus:</b> {region.recommendedFocus}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 2. AFFORESTATION STRATEGY */}
+                        {activeTab === "afforestation" && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900">Smart Afforestation Allocation</h2>
+                                    <p className="text-sm text-slate-500">Species Suitability & Site Selection Matrix</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-white border border-green-300 rounded-2xl p-6 shadow-sm">
+                                        <span className="text-xs font-bold uppercase text-green-700 bg-green-100 px-2.5 py-1 rounded">Optimal Candidate</span>
+                                        <h3 className="text-2xl font-black text-slate-900 mt-3 mb-2">{region.species}</h3>
+                                        <p className="text-sm text-slate-600 mb-4">{region.speciesReason}</p>
+                                        <div className="flex flex-wrap gap-2 text-xs font-bold">
+                                            <span className="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-lg">Suitability Score: {region.suitability}%</span>
+                                            <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg">Native / Adapted Genotype</span>
+                                            <span className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg">Ultra Low Water Need</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                                        <h3 className="text-base font-bold text-slate-900 mb-4">Comparative Aridity Suitability</h3>
+                                        <div className="space-y-3">
+                                            {[
+                                                { name: "Acacia Tortilis (الطلح)", score: 88, water: "Ultra Low" },
+                                                { name: "Jojoba (الهوهوبا)", score: 79, water: "Low" },
+                                                { name: "Moringa Peregrina (بان)", score: 72, water: "Low-Med" },
+                                                { name: "Conocarpus (كونوكاربس)", score: 65, water: "Moderate" },
+                                            ].map((sp) => (
+                                                <div key={sp.name} className="border border-slate-100 rounded-lg p-3 bg-slate-50">
+                                                    <div className="flex justify-between text-xs font-bold text-slate-800 mb-1">
+                                                        <span>{sp.name}</span>
+                                                        <span className="text-green-700">{sp.score}% ({sp.water})</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-green-600" style={{ width: `${sp.score}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. SCENARIO MODELING */}
+                        {activeTab === "simulation" && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900">Scenario Modeling & Impact Simulation</h2>
+                                    <p className="text-sm text-slate-500">Quantitative What-If Projections Calibrated with IPCC Standards</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
+                                        <h3 className="text-base font-bold text-slate-900">Intervention Controls</h3>
+                                        <div>
+                                            <div className="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                                                <span>Afforestation Volume:</span>
+                                                <span className="text-green-700 font-extrabold">{treesCount}K Trees</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                min="10" 
+                                                max="300" 
+                                                step="5" 
+                                                value={treesCount}
+                                                onChange={(e) => setTreesCount(Number(e.target.value))}
+                                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-700 block mb-1.5">Irrigation Technology</label>
+                                            <select 
+                                                value={irrigation} 
+                                                onChange={(e) => setIrrigation(e.target.value)}
+                                                className="w-full p-2.5 text-xs font-semibold bg-slate-50 border border-slate-300 rounded-lg"
+                                            >
+                                                <option>Solar-Powered Subsurface Drip (92% Eff.)</option>
+                                                <option>Treated Wastewater Closed Network (85% Eff.)</option>
+                                                <option>Surface Micro-Drip System (78% Eff.)</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-700 block mb-1.5">Simulation Horizon</label>
+                                            <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+                                                <button 
+                                                    onClick={() => setHorizon(3)}
+                                                    className={`py-2 rounded-lg border ${horizon === 3 ? 'bg-green-600 text-white border-green-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+                                                >
+                                                    3 Years
+                                                </button>
+                                                <button 
+                                                    onClick={() => setHorizon(5)}
+                                                    className={`py-2 rounded-lg border ${horizon === 5 ? 'bg-green-600 text-white border-green-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+                                                >
+                                                    5 Years
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                            <span className="text-xs font-bold uppercase text-slate-500">Local Surface Cooling</span>
+                                            <div className="text-3xl font-extrabold text-green-700 mt-2">-{cooling}°C</div>
+                                            <span className="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded mt-2 inline-block">Thermal Mitigation</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                            <span className="text-xs font-bold uppercase text-slate-500">NDVI Greenery Boost</span>
+                                            <div className="text-3xl font-extrabold text-green-700 mt-2">+{ndviGain}</div>
+                                            <span className="text-xs font-semibold text-green-800 bg-green-100 px-2 py-0.5 rounded mt-2 inline-block">Biomass Expansion</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                            <span className="text-xs font-bold uppercase text-slate-500">Carbon Sequestration</span>
+                                            <div className="text-3xl font-extrabold text-slate-900 mt-2">{carbonOffset} <span className="text-sm font-semibold text-slate-500">tCO₂/yr</span></div>
+                                            <span className="text-xs font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded mt-2 inline-block">IPCC AFOLU Calibrated</span>
+                                        </div>
+                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                            <span className="text-xs font-bold uppercase text-slate-500">Soil Moisture Recovery</span>
+                                            <div className="text-3xl font-extrabold text-slate-900 mt-2">+{moistureRecovery}%</div>
+                                            <span className="text-xs font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded mt-2 inline-block">Hydration Restoration</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden">
+                                    <h3 className="text-base font-bold text-slate-900 mb-4">Baseline vs. Post-Intervention Equilibrium</h3>
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                                            <tr>
+                                                <th className="p-3 font-bold">Environmental Indicator</th>
+                                                <th className="p-3 font-bold">Pre-Intervention Baseline</th>
+                                                <th className="p-3 font-bold">Projected Equilibrium</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 font-medium">
+                                            <tr><td className="p-3">Vegetation Index (NDVI)</td><td className="p-3">{region.ndvi}</td><td className="p-3 font-bold text-green-700">{(region.ndvi + parseFloat(ndviGain)).toFixed(2)} (+{ndviGain})</td></tr>
+                                            <tr><td className="p-3">Average Summer Temp</td><td className="p-3">{region.temp}°C</td><td className="p-3 font-bold text-green-700">{(region.temp - parseFloat(cooling)).toFixed(1)}°C (-{cooling}°C)</td></tr>
+                                            <tr><td className="p-3">Soil Moisture Content</td><td className="p-3">{region.moisture}%</td><td className="p-3 font-bold text-green-700">{(region.moisture + parseFloat(moistureRecovery)).toFixed(1)}% (+{moistureRecovery}%)</td></tr>
+                                            <tr><td className="p-3">Vulnerability Score</td><td className="p-3">{region.risk} / 100</td><td className="p-3 font-bold text-green-700">{Math.max(15, region.risk - Math.round(parseFloat(ndviGain)*120))} / 100</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 4. NATIONAL PRIORITY MATRIX */}
+                        {activeTab === "priority" && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900">National Intervention Priority Matrix</h2>
+                                    <p className="text-sm text-slate-500">Spatial Land Allocation & Strategic Urgency Ranking</p>
+                                </div>
+
+                                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                                            <tr>
+                                                <th className="p-4 font-bold">Rank</th>
+                                                <th className="p-4 font-bold">Target Region</th>
+                                                <th className="p-4 font-bold">Aridity Risk</th>
+                                                <th className="p-4 font-bold">Suitability</th>
+                                                <th className="p-4 font-bold">Priority Score</th>
+                                                <th className="p-4 font-bold">Strategic Allocation Focus</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 font-medium">
+                                            {Object.keys(REGIONS).sort((a,b) => REGIONS[a].priorityRank - REGIONS[b].priorityRank).map((key) => {
+                                                const r = REGIONS[key];
+                                                return (
+                                                    <tr key={key} className="hover:bg-slate-50/80">
+                                                        <td className="p-4">
+                                                            <span className="w-6 h-6 rounded-full bg-green-700 text-white font-bold flex items-center justify-center text-xs">
+                                                                {r.priorityRank}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-4 font-bold text-slate-900">{r.name}</td>
+                                                        <td className="p-4"><span className={`px-2 py-0.5 rounded font-bold ${r.risk > 60 ? 'bg-red-100 text-red-700' : r.risk > 35 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>{r.risk} / 100</span></td>
+                                                        <td className="p-4 font-bold text-slate-700">{r.suitability}%</td>
+                                                        <td className="p-4 font-extrabold text-green-800">{r.priorityScore}</td>
+                                                        <td className="p-4 text-slate-600">{r.recommendedFocus}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 5. METHODOLOGY & PROVENANCE */}
+                        {activeTab === "methodology" && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900">Decision Architecture & Data Provenance</h2>
+                                    <p className="text-sm text-slate-500">End-to-End Pipeline & Scientific Rigor</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                                        <h3 className="text-base font-bold text-slate-900">🔄 5-Stage Decision Pipeline</h3>
+                                        <div className="space-y-3 text-xs text-slate-600">
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>01. Ingestion:</b> Continuous ingestion of ERA5 climate reanalysis and Sentinel-2 multi-spectral bands.</div>
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>02. Feature Engineering:</b> Extraction of surface temperature anomalies, NDVI vegetation health, and topsoil hydration deficits.</div>
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>03. Machine Learning Inference:</b> Supervised Random Forest model classifying multi-class land degradation risk.</div>
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>04. Spatial Optimization:</b> Genotype-to-soil matching pairing drought-resilient native species.</div>
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>05. What-If Simulation:</b> Mathematical modeling of microclimate cooling and carbon sequestration.</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                                        <h3 className="text-base font-bold text-slate-900">🛰️ Verifiable Data Sources</h3>
+                                        <div className="space-y-3 text-xs text-slate-600">
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>ECMWF ERA5 Reanalysis:</b> Atmospheric temperature, thermal stress, and rainfall patterns.</div>
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>Sentinel-2 & Landsat-9:</b> High-resolution optical vegetation index (NDVI) and surface degradation monitoring.</div>
+                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200"><b>IPCC Guidelines:</b> Carbon sequestration constants calibrated for dryland afforestation (AFOLU chapter).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 6. MEET THE TEAM */}
+                        {activeTab === "team" && (
+                            <div className="space-y-8">
+                                <div className="text-center max-w-2xl mx-auto">
+                                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">The Minds Behind GreenPulse</h2>
+                                    <p className="text-sm sm:text-base font-bold text-green-700 mt-1.5">AMORA Tech • SETA HACK 2026</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                                    <div className="bg-white border border-slate-200 border-t-8 border-t-green-800 rounded-3xl p-8 shadow-md hover:shadow-lg transition-shadow text-center">
+                                        <img 
+                                            src="assets/team/abdulrahman.jpg" 
+                                            onError={(e)=>{ e.target.onerror = null; e.target.src="assets/team/Abdulrahman.jpg"; }} 
+                                            className="w-32 h-32 rounded-full mx-auto object-cover mb-5 border-4 border-green-600 shadow-md transition-transform hover:scale-105" 
+                                        />
+                                        <h3 className="text-2xl font-black text-slate-900">Abdulrahman Ali</h3>
+                                        <div className="text-sm font-extrabold text-green-700 uppercase tracking-wide mt-1 mb-4">Data & AI Engineer</div>
+                                        <div className="text-sm text-slate-600 text-left bg-slate-50 border border-slate-100 p-5 rounded-2xl space-y-2.5 leading-relaxed">
+                                            <p>• End-to-end data processing and feature engineering</p>
+                                            <p>• Machine learning risk model development & training</p>
+                                            <p>• Quantitative scenario modeling & simulation engine</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-slate-200 border-t-8 border-t-green-600 rounded-3xl p-8 shadow-md hover:shadow-lg transition-shadow text-center">
+                                        <img 
+                                            src="assets/team/malak.png" 
+                                            onError={(e)=>{ e.target.onerror = null; e.target.src="assets/team/Malak.png"; }} 
+                                            className="w-32 h-32 rounded-full mx-auto object-cover mb-5 border-4 border-green-600 shadow-md transition-transform hover:scale-105" 
+                                        />
+                                        <h3 className="text-2xl font-black text-slate-900">Malak Waleed</h3>
+                                        <div className="text-sm font-extrabold text-green-700 uppercase tracking-wide mt-1 mb-4">Product & UI/UX Lead</div>
+                                        <div className="text-sm text-slate-600 text-left bg-slate-50 border border-slate-100 p-5 rounded-2xl space-y-2.5 leading-relaxed">
+                                            <p>• Product architecture and user experience design system</p>
+                                            <p>• Decision pathway structuring & user workflow</p>
+                                            <p>• Presentation strategy, pitch deck & value narrative</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="max-w-4xl mx-auto bg-green-50/80 border border-green-200 rounded-2xl px-6 py-4 text-center text-sm font-medium text-green-950 italic whitespace-nowrap overflow-hidden text-ellipsis shadow-sm">
+                                    "We believe climate adaptation should be driven by verifiable data intelligence, not guesswork."
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* INSTITUTIONAL FOOTER */}
+                    <footer className="bg-white border-t border-slate-200 py-6">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+                            <div>
+                                <b>GreenPulse</b> © 2026 • Climate Intelligence Platform
+                            </div>
+                            <div className="flex items-center gap-4 font-semibold text-slate-600">
+                                <span>Built by <b>AMORA Tech</b></span>
+                                <span>•</span>
+                                <span>SETA HACK 2026</span>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+</body>
+</html>
